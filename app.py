@@ -15,9 +15,23 @@ db_config = {
     'port': 3306  # Puerto predeterminado de MySQL
 }
 
-@app.route('/')
-def home():
-    return "El servidor está funcionando correctamente."
+@app.route('/obtener', methods=['GET'])
+def obtener():
+    try:
+        print("Attempting database connection...")  # Add logging
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM Alumno")
+        datos = cursor.fetchall()
+        return jsonify(datos), 200
+    except Exception as e:
+        print(f"Database error: {str(e)}")  # Add detailed error logging
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 # Ruta para insertar datos
 @app.route('/insertar', methods=['POST'])
