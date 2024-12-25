@@ -1,0 +1,26 @@
+----------------------------------
+Esto en PC Memo Skapi
+
+MySQL
+Oracle cuenta
+user: alaniswillc@gmail.com
+pasw: Pedro3103$O
+root
+
+Root Account Password>
+Pedro3103$R
+
+user name: imanno1
+host> all host
+role> DB Admin
+password> Pedro3103$A
+es la del servicio
+
+user name: imanno2
+host> all host
+role> User Admin
+password> Pedro3103$U
+
+Windows Service Name: MySQL80
+
+------------------------------------
