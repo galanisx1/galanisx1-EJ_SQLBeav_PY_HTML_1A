@@ -55,6 +55,5 @@ def handle_404_error(e):
     return jsonify({"error": "Route not found"}), 404
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 10000))
-    app.logger.info(f"Starting server on port {port}")
+    port = int(os.getenv("PORT", 3000))  # Change default port to 3000
     app.run(host='0.0.0.0', port=port)
