@@ -1,4 +1,4 @@
-Flask==2.2.3
-mysql-connector-python==8.0.28
-flask-cors==5.0.0
+Flask
+mysql-connector-python
+flask-cors
 Werkzeug==2.2.3
