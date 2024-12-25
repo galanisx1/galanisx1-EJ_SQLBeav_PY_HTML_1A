@@ -5,12 +5,12 @@ from flask_cors import CORS
 import logging
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Database configuration
 db_config = {
     'host': 'sql310.infinityfree.com',
     'user': 'if0_37975979',
@@ -23,36 +23,86 @@ db_config = {
 def home():
     return jsonify({"message": "El servidor está funcionando correctamente."})
 
-@app.route('/test-db')
-def test_db():
+@app.route('/obtener', methods=['GET'])
+def obtener_datos():
     try:
-        app.logger.info("Testing database connection...")
+        logger.info("Attempting database connection...")
+        conn = mysql.connector.connect(**db_config)
+        logger.info("Database connection successful")
+        
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM Alumno")
+        datos = cursor.fetchall()
+        logger.info(f"Retrieved {len(datos)} records")
+        
+        return jsonify(datos), 200
+        
+    except mysql.connector.Error as err:
+        logger.error(f"Database error: {err}")
+        return jsonify({
+            'error': 'Database connection error',
+            'details': str(err)
+        }), 500
+    except Exception as e:
+        logger.error(f"General error: {e}")
+        return jsonify({
+            'error': 'Server error',
+            'details': str(e)
+        }), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+            logger.info("Database connection closed")
+
+@app.route('/insertar', methods=['POST'])
+def insertar_datos():
+    try:
+        data = request.json
+        logger.info(f"Received data: {data}")
+        
+        required_fields = ['nombre', 'edad', 'telefono']
+        if not all(field in data for field in required_fields):
+            return jsonify({
+                'error': 'Missing required fields',
+                'required': required_fields
+            }), 400
+            
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        app.logger.info("Database connection successful")
-        return jsonify({"status": "Database connection successful"}), 200
+        
+        cursor.execute(
+            "INSERT INTO Alumno (nombre, edad, telefono) VALUES (%s, %s, %s)",
+            (data['nombre'], data['edad'], data['telefono'])
+        )
+        
+        conn.commit()
+        logger.info("Data inserted successfully")
+        
+        return jsonify({
+            'message': 'Datos insertados correctamente',
+            'inserted_data': data
+        }), 200
+        
+    except mysql.connector.Error as err:
+        logger.error(f"Database error: {err}")
+        return jsonify({
+            'error': 'Database error',
+            'details': str(err)
+        }), 500
     except Exception as e:
-        app.logger.error(f"Database connection failed: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"General error: {e}")
+        return jsonify({
+            'error': 'Server error',
+            'details': str(e)
+        }), 500
     finally:
         if 'cursor' in locals():
             cursor.close()
         if 'conn' in locals():
             conn.close()
 
-# Your existing routes...
-
-@app.errorhandler(500)
-def handle_500_error(e):
-    app.logger.error(f"Internal server error: {str(e)}")
-    return jsonify({"error": "Internal server error", "details": str(e)}), 500
-
-@app.errorhandler(404)
-def handle_404_error(e):
-    app.logger.error(f"Page not found: {str(e)}")
-    return jsonify({"error": "Route not found"}), 404
-
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 3000))  # Change default port to 3000
+    port = int(os.getenv("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
