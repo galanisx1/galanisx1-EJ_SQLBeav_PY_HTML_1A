@@ -21,8 +21,7 @@ db_config = {
 
 @app.route('/')
 def home():
-    app.logger.info("Home endpoint accessed")
-    return jsonify({"message": "El servidor está funcionando correctamente."}), 200
+    return jsonify({"message": "El servidor está funcionando correctamente."})
 
 @app.route('/test-db')
 def test_db():
