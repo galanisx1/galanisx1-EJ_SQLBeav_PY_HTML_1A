@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 db_config = {
-    'host': '185.27.134.10',
+    'host': '185.27.134.59',
     'user': 'if0_37975979',
     'password': 'Pedro3103$A',
     'database': 'eif0_37975979_ejemplo_dreamweaver',
