@@ -1,11 +1,14 @@
-import os
+Copyimport os
 from flask import Flask, request, jsonify
 import mysql.connector
 from flask_cors import CORS
+import logging
 
-# Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
 
 # Database configuration
 db_config = {
@@ -16,57 +19,42 @@ db_config = {
     'port': 3306
 }
 
-# Basic route to test server
 @app.route('/')
 def home():
-    return "El servidor está funcionando correctamente."
+    app.logger.info("Home endpoint accessed")
+    return jsonify({"message": "El servidor está funcionando correctamente."}), 200
 
-# Test route without database
-@app.route('/test')
-def test():
-    return jsonify({"status": "Server is working"}), 200
-
-# Insert route
-@app.route('/insertar', methods=['POST'])
-def insertar_datos():  # Changed function name to avoid potential conflicts
-    data = request.json
-    nombre = data['nombre']
-    edad = data['edad']
-    telefono = data['telefono']
-    
+@app.route('/test-db')
+def test_db():
     try:
+        app.logger.info("Testing database connection...")
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO Alumno (nombre, edad, telefono) VALUES (%s, %s, %s)", 
-                      (nombre, edad, telefono))
-        conn.commit()
-        return jsonify({'message': 'Datos insertados correctamente'}), 200
+        cursor.execute("SELECT 1")
+        app.logger.info("Database connection successful")
+        return jsonify({"status": "Database connection successful"}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Database connection failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
     finally:
         if 'cursor' in locals():
             cursor.close()
         if 'conn' in locals():
             conn.close()
 
-# Get route
-@app.route('/obtener', methods=['GET'])
-def obtener_datos():  # Changed function name to avoid potential conflicts
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM Alumno")
-        datos = cursor.fetchall()
-        return jsonify(datos), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'conn' in locals():
-            conn.close()
+# Your existing routes...
 
-# Run the app
+@app.errorhandler(500)
+def handle_500_error(e):
+    app.logger.error(f"Internal server error: {str(e)}")
+    return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+@app.errorhandler(404)
+def handle_404_error(e):
+    app.logger.error(f"Page not found: {str(e)}")
+    return jsonify({"error": "Route not found"}), 404
+
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 10000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.logger.info(f"Starting server on port {port}")
+    app.run(host='0.0.0.0', port=port)
