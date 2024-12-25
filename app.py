@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 import mysql.connector
 from flask_cors import CORS
@@ -51,6 +52,10 @@ def obtener():
     finally:
         cursor.close()
         conn.close()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 8080)), debug=True)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
